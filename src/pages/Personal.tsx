@@ -3,7 +3,6 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Gift, CheckCircle, Volume2 } from 'lucide-react';
-import { getUserTasks, completeTask } from '@/utils/userTasks';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -27,8 +26,44 @@ const Personal = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [userName, setUserName] = useState('');
-  const [tasks, setTasks] = useState(getUserTasks());
+  const [userId, setUserId] = useState<string>('');
+  const [tasks, setTasks] = useState<any[]>([]);
   const [playingRewardFor, setPlayingRewardFor] = useState<string | null>(null);
+
+  const fetchTasks = async (uid: string) => {
+    const { data, error } = await supabase
+      .from('user_tasks')
+      .select(`
+        id,
+        status,
+        accepted_at,
+        completed_at,
+        task:tasks (
+          id,
+          title,
+          location,
+          category,
+          reward_details
+        )
+      `)
+      .eq('user_id', uid);
+
+    if (error) {
+      console.error('Error fetching tasks:', error);
+      return;
+    }
+
+    setTasks(data?.map(ut => ({
+      id: ut.task.id,
+      userTaskId: ut.id,
+      title: ut.task.title,
+      location: ut.task.location,
+      category: ut.task.category,
+      rewardDetails: ut.task.reward_details,
+      status: ut.status,
+      completedAt: ut.completed_at
+    })) || []);
+  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -38,6 +73,8 @@ const Personal = () => {
         return;
       }
 
+      setUserId(session.user.id);
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('full_name')
@@ -45,6 +82,8 @@ const Personal = () => {
         .maybeSingle();
 
       setUserName(profile?.full_name || session.user.email || 'User');
+      
+      await fetchTasks(session.user.id);
     };
 
     checkUser();
@@ -52,9 +91,25 @@ const Personal = () => {
 
   if (!userName) return null;
 
-  const handleMarkComplete = (taskId: string) => {
-    completeTask(taskId);
-    setTasks(getUserTasks());
+  const handleMarkComplete = async (userTaskId: string) => {
+    const { error } = await supabase
+      .from('user_tasks')
+      .update({ 
+        status: 'pending-approval',
+        completed_at: new Date().toISOString()
+      })
+      .eq('id', userTaskId);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to mark task as complete.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    await fetchTasks(userId);
     toast({
       title: 'Task Marked Complete',
       description: 'Waiting for approval from the city.',
@@ -225,7 +280,7 @@ const Personal = () => {
                   {task.status === 'in-progress' && (
                     <Button 
                       className="w-full"
-                      onClick={() => handleMarkComplete(task.id)}
+                      onClick={() => handleMarkComplete(task.userTaskId)}
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Mark as Complete

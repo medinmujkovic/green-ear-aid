@@ -38,6 +38,51 @@ export type Database = {
         }
         Relationships: []
       }
+      tasks: {
+        Row: {
+          asdi_insight: string
+          assignee: string
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          location: string
+          reward: number
+          reward_details: string
+          reward_type: string
+          title: string
+        }
+        Insert: {
+          asdi_insight: string
+          assignee: string
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          location: string
+          reward?: number
+          reward_details: string
+          reward_type: string
+          title: string
+        }
+        Update: {
+          asdi_insight?: string
+          assignee?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          location?: string
+          reward?: number
+          reward_details?: string
+          reward_type?: string
+          title?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -58,6 +103,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_tasks: {
+        Row: {
+          accepted_at: string
+          completed_at: string | null
+          id: string
+          status: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          completed_at?: string | null
+          id?: string
+          status?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          completed_at?: string | null
+          id?: string
+          status?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
