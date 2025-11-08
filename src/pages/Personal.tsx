@@ -6,8 +6,8 @@ import { MapPin, Gift, CheckCircle, Volume2 } from 'lucide-react';
 import { getUserTasks, completeTask } from '@/utils/userTasks';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const categoryColors = {
   cleanup: 'bg-accent/10 text-accent border-accent/20',
@@ -26,17 +26,31 @@ const statusColors = {
 const Personal = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const user = getUser();
+  const [userName, setUserName] = useState('');
   const [tasks, setTasks] = useState(getUserTasks());
   const [playingRewardFor, setPlayingRewardFor] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    }
-  }, [user, navigate]);
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
 
-  if (!user) return null;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      setUserName(profile?.full_name || session.user.email || 'User');
+    };
+
+    checkUser();
+  }, [navigate]);
+
+  if (!userName) return null;
 
   const handleMarkComplete = (taskId: string) => {
     completeTask(taskId);
@@ -63,7 +77,7 @@ const Personal = () => {
         return;
       }
 
-      const rewardMessage = `Congratulations ${user.name}! You've successfully completed the task: ${taskTitle}. Your dedication to making our city cleaner and greener is truly inspiring. Thank you for your contribution to our community's environmental health!`;
+      const rewardMessage = `Congratulations ${userName}! You've successfully completed the task: ${taskTitle}. Your dedication to making our city cleaner and greener is truly inspiring. Thank you for your contribution to our community's environmental health!`;
 
       const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/9BWtsMINqrJLrRacOk9x', {
         method: 'POST',
@@ -121,7 +135,7 @@ const Personal = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Welcome, {user.name}!
+            Welcome, {userName}!
           </h1>
           <p className="text-muted-foreground">
             Track your environmental impact and manage your tasks
