@@ -3,7 +3,7 @@ import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Coins, Volume2, CheckCircle } from 'lucide-react';
+import { MapPin, Gift, Volume2, CheckCircle, Building2, User } from 'lucide-react';
 import { availableTasks } from '@/data/mockTasks';
 import { getUserTasks, addUserTask } from '@/utils/userTasks';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +15,14 @@ const categoryColors = {
   planting: 'bg-success/10 text-success border-success/20',
   monitoring: 'bg-warning/10 text-warning border-warning/20',
   education: 'bg-primary/10 text-primary border-primary/20',
+};
+
+const rewardTypeLabels: Record<string, string> = {
+  money: 'Money',
+  transport: 'Free Transport',
+  coupon: 'Shopping Coupon',
+  cinema: 'Cinema Ticket',
+  other: 'Reward',
 };
 
 const TaskDetail = () => {
@@ -142,6 +150,19 @@ const TaskDetail = () => {
                     {task.category}
                   </Badge>
                 </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge variant="secondary" className="text-xs">
+                    {task.assignee === 'government' ? (
+                      <><Building2 className="h-3 w-3 mr-1" />Government</>
+                    ) : (
+                      <><User className="h-3 w-3 mr-1" />Individual</>
+                    )}
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    <Gift className="h-3 w-3 mr-1" />
+                    {rewardTypeLabels[task.rewardType]}
+                  </Badge>
+                </div>
                 <CardDescription className="text-base">
                   {task.description}
                 </CardDescription>
@@ -168,13 +189,12 @@ const TaskDetail = () => {
             <Card className="bg-gradient-eco text-primary-foreground">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Coins className="h-6 w-6" />
+                  <Gift className="h-6 w-6" />
                   Reward
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-4xl font-bold">{task.reward}</p>
-                <p className="text-sm opacity-90 mt-1">EcoPoints</p>
+                <p className="text-2xl font-bold">{task.rewardDetails}</p>
               </CardContent>
             </Card>
 

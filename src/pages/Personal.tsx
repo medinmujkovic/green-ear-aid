@@ -2,7 +2,7 @@ import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Coins, CheckCircle, Volume2 } from 'lucide-react';
+import { MapPin, Gift, CheckCircle, Volume2 } from 'lucide-react';
 import { getUserTasks, completeTask } from '@/utils/userTasks';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -112,9 +112,7 @@ const Personal = () => {
     }
   };
 
-  const totalRewards = tasks
-    .filter(task => task.status === 'completed' || task.status === 'pending-approval')
-    .reduce((sum, task) => sum + task.reward, 0);
+  const completedTasks = tasks.filter(task => task.status === 'completed' || task.status === 'pending-approval');
 
   return (
     <div className="min-h-screen bg-gradient-sky">
@@ -160,13 +158,12 @@ const Personal = () => {
           <Card className="bg-gradient-eco text-primary-foreground">
             <CardHeader>
               <CardTitle className="text-sm font-medium opacity-90">
-                Total Rewards Earned
+                Completed Tasks
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold flex items-center gap-2">
-                <Coins className="h-8 w-8" />
-                {totalRewards}
+              <p className="text-3xl font-bold">
+                {completedTasks.length}
               </p>
             </CardContent>
           </Card>
@@ -206,8 +203,8 @@ const Personal = () => {
                     <span>{task.location}</span>
                   </div>
                   <div className="flex items-center gap-2 text-primary font-semibold">
-                    <Coins className="h-5 w-5" />
-                    <span>{task.reward} EcoPoints</span>
+                    <Gift className="h-5 w-5" />
+                    <span>{task.rewardDetails}</span>
                   </div>
                 </CardContent>
                 <CardFooter className="flex-col gap-2">
