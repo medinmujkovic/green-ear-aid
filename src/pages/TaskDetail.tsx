@@ -1,0 +1,218 @@
+import { useParams, useNavigate } from 'react-router-dom';
+import { Navigation } from '@/components/Navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { MapPin, Coins, Volume2, CheckCircle } from 'lucide-react';
+import { availableTasks } from '@/data/mockTasks';
+import { getUserTasks, addUserTask } from '@/utils/userTasks';
+import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
+import { getUser } from '@/utils/auth';
+
+const categoryColors = {
+  cleanup: 'bg-accent/10 text-accent border-accent/20',
+  planting: 'bg-success/10 text-success border-success/20',
+  monitoring: 'bg-warning/10 text-warning border-warning/20',
+  education: 'bg-primary/10 text-primary border-primary/20',
+};
+
+const TaskDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const user = getUser();
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+    }
+  }, [user, navigate]);
+
+  if (!user) return null;
+
+  const task = availableTasks.find(t => t.id === id);
+  const userTasks = getUserTasks();
+  const hasAccepted = userTasks.some(t => t.id === id);
+
+  if (!task) {
+    return (
+      <div className="min-h-screen bg-gradient-sky">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <p>Task not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleAcceptTask = () => {
+    addUserTask(task);
+    toast({
+      title: 'Task Accepted!',
+      description: 'Check your Personal tab to manage this task.',
+    });
+    navigate('/personal');
+  };
+
+  const handlePlayAudio = async () => {
+    setIsPlayingAudio(true);
+    
+    try {
+      const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
+      
+      if (!apiKey) {
+        toast({
+          title: 'Configuration Error',
+          description: 'ElevenLabs API key not configured. Please add it to your environment variables.',
+          variant: 'destructive',
+        });
+        setIsPlayingAudio(false);
+        return;
+      }
+
+      const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/9BWtsMINqrJLrRacOk9x', {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          text: task.asdiInsight,
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate audio');
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      
+      audio.onended = () => {
+        setIsPlayingAudio(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+      await audio.play();
+      
+      toast({
+        title: 'Playing AI Analysis',
+        description: 'Listen to the ASDI insights for this task.',
+      });
+    } catch (error) {
+      console.error('Audio playback error:', error);
+      toast({
+        title: 'Audio Error',
+        description: 'Failed to play audio. Please try again.',
+        variant: 'destructive',
+      });
+      setIsPlayingAudio(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-sky">
+      <Navigation />
+      
+      <main className="container mx-auto px-4 py-8">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/tasks')}
+          className="mb-6"
+        >
+          ← Back to Tasks
+        </Button>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <CardTitle className="text-2xl">{task.title}</CardTitle>
+                  <Badge className={categoryColors[task.category]} variant="outline">
+                    {task.category}
+                  </Badge>
+                </div>
+                <CardDescription className="text-base">
+                  {task.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-5 w-5" />
+                  <span>{task.location}</span>
+                </div>
+                
+                <div className="border-t pt-6">
+                  <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                    <span className="text-primary">ASDI Insight</span>
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {task.asdiInsight}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-4">
+            <Card className="bg-gradient-eco text-primary-foreground">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Coins className="h-6 w-6" />
+                  Reward
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-4xl font-bold">{task.reward}</p>
+                <p className="text-sm opacity-90 mt-1">EcoPoints</p>
+              </CardContent>
+            </Card>
+
+            <Button 
+              className="w-full" 
+              size="lg"
+              onClick={handlePlayAudio}
+              disabled={isPlayingAudio}
+              variant="outline"
+            >
+              <Volume2 className="h-5 w-5 mr-2" />
+              {isPlayingAudio ? 'Playing...' : 'Listen to AI Analysis'}
+            </Button>
+
+            {!hasAccepted ? (
+              <Button 
+                className="w-full" 
+                size="lg"
+                onClick={handleAcceptTask}
+              >
+                <CheckCircle className="h-5 w-5 mr-2" />
+                Accept Task
+              </Button>
+            ) : (
+              <Button 
+                className="w-full" 
+                size="lg"
+                variant="secondary"
+                disabled
+              >
+                Task Already Accepted
+              </Button>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default TaskDetail;
