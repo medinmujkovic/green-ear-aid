@@ -5,6 +5,8 @@ export interface Task {
   location: string;
   reward: number;
   category: 'cleanup' | 'planting' | 'monitoring' | 'education';
+  assignee: 'government' | 'personal';
+  rewardType: 'money' | 'transport' | 'coupon' | 'cinema' | 'other';
   asdiInsight: string;
   status?: 'available' | 'in-progress' | 'pending-approval' | 'completed';
   completedAt?: string;

@@ -1,7 +1,7 @@
 import { Task } from '@/types/task';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Coins } from 'lucide-react';
+import { MapPin, Coins, Building2, User, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface TaskCardProps {
@@ -15,6 +15,14 @@ const categoryColors = {
   education: 'bg-primary/10 text-primary border-primary/20',
 };
 
+const rewardTypeLabels: Record<string, string> = {
+  money: 'Money',
+  transport: 'Free Transport',
+  coupon: 'Shopping Coupon',
+  cinema: 'Cinema Ticket',
+  other: 'Reward',
+};
+
 export const TaskCard = ({ task }: TaskCardProps) => {
   const navigate = useNavigate();
 
@@ -24,10 +32,23 @@ export const TaskCard = ({ task }: TaskCardProps) => {
       onClick={() => navigate(`/task/${task.id}`)}
     >
       <CardHeader>
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3 mb-3">
           <CardTitle className="text-lg leading-tight">{task.title}</CardTitle>
           <Badge className={categoryColors[task.category]} variant="outline">
             {task.category}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-xs">
+            {task.assignee === 'government' ? (
+              <><Building2 className="h-3 w-3 mr-1" />Government</>
+            ) : (
+              <><User className="h-3 w-3 mr-1" />Personal</>
+            )}
+          </Badge>
+          <Badge variant="secondary" className="text-xs">
+            <Gift className="h-3 w-3 mr-1" />
+            {rewardTypeLabels[task.rewardType]}
           </Badge>
         </div>
       </CardHeader>
