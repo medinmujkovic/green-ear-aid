@@ -37,6 +37,15 @@ const Auth = () => {
       return;
     }
 
+    if (loginPassword.length < 8) {
+      toast({
+        title: 'Error',
+        description: 'Password must be at least 8 characters',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const user = {
       name: loginEmail.split('@')[0],
       email: loginEmail,
@@ -59,6 +68,15 @@ const Auth = () => {
       toast({
         title: 'Error',
         description: 'Please fill in all fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (signupPassword.length < 8) {
+      toast({
+        title: 'Error',
+        description: 'Password must be at least 8 characters',
         variant: 'destructive',
       });
       return;

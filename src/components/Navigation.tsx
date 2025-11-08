@@ -1,11 +1,13 @@
 import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
-import { Leaf, LogOut } from 'lucide-react';
-import { clearUser } from '@/utils/auth';
+import { Leaf, LogOut, User } from 'lucide-react';
+import { clearUser, getUser } from '@/utils/auth';
 import { useNavigate } from 'react-router-dom';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export const Navigation = () => {
   const navigate = useNavigate();
+  const user = getUser();
 
   const handleLogout = () => {
     clearUser();
@@ -38,6 +40,24 @@ export const Navigation = () => {
             >
               Personal
             </NavLink>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <User className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64">
+                <div className="text-center py-2">
+                  <p className="text-lg font-semibold text-foreground">
+                    Welcome, {user?.name}!
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button 
               variant="ghost" 
               size="sm"
