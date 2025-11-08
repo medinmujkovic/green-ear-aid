@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,9 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Leaf } from 'lucide-react';
-import { saveUser, getUser } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -20,12 +19,16 @@ const Auth = () => {
   const [signupPassword, setSignupPassword] = useState('');
 
   useEffect(() => {
-    if (getUser()) {
-      navigate('/tasks');
-    }
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/tasks');
+      }
+    };
+    checkUser();
   }, [navigate]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!loginEmail || !loginPassword) {
@@ -46,22 +49,28 @@ const Auth = () => {
       return;
     }
 
-    const user = {
-      name: loginEmail.split('@')[0],
+    const { error } = await supabase.auth.signInWithPassword({
       email: loginEmail,
-      tasksCompleted: 0,
-      totalRewards: 0,
-    };
+      password: loginPassword,
+    });
 
-    saveUser(user);
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     toast({
       title: 'Welcome back!',
-      description: `Logged in as ${user.name}`,
+      description: `Logged in successfully`,
     });
     navigate('/tasks');
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!signupName || !signupEmail || !signupPassword) {
@@ -82,17 +91,29 @@ const Auth = () => {
       return;
     }
 
-    const user = {
-      name: signupName,
+    const { error } = await supabase.auth.signUp({
       email: signupEmail,
-      tasksCompleted: 0,
-      totalRewards: 0,
-    };
+      password: signupPassword,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          full_name: signupName,
+        },
+      },
+    });
 
-    saveUser(user);
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     toast({
       title: 'Account created!',
-      description: `Welcome, ${user.name}!`,
+      description: `Welcome, ${signupName}!`,
     });
     navigate('/tasks');
   };

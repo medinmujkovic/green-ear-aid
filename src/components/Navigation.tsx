@@ -1,16 +1,34 @@
 import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
 import { Leaf, LogOut, User } from 'lucide-react';
-import { clearUser, getUser } from '@/utils/auth';
 import { useNavigate } from 'react-router-dom';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 
 export const Navigation = () => {
   const navigate = useNavigate();
-  const user = getUser();
+  const [userName, setUserName] = useState<string>('');
 
-  const handleLogout = () => {
-    clearUser();
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', session.user.id)
+          .single();
+        
+        setUserName(profile?.full_name || session.user.email || 'User');
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     navigate('/auth');
   };
 
@@ -53,7 +71,7 @@ export const Navigation = () => {
               <PopoverContent className="w-64">
                 <div className="text-center py-2">
                   <p className="text-lg font-semibold text-foreground">
-                    Welcome, {user?.name}!
+                    Welcome, {userName}!
                   </p>
                 </div>
               </PopoverContent>
