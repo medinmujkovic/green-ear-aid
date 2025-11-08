@@ -1,6 +1,6 @@
 import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
-import { Leaf, LogOut, User } from 'lucide-react';
+import { Leaf, LogOut, User, ListTodo } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 export const Navigation = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState<string>('');
+  const [isOfficial, setIsOfficial] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -21,6 +22,14 @@ export const Navigation = () => {
           .single();
         
         setUserName(profile?.full_name || session.user.email || 'User');
+
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        setIsOfficial(roleData?.role === 'official');
       }
     };
 
@@ -58,6 +67,16 @@ export const Navigation = () => {
             >
               Personal
             </NavLink>
+            {isOfficial && (
+              <NavLink 
+                to="/requests" 
+                className="text-foreground/70 hover:text-foreground transition-colors flex items-center gap-1"
+                activeClassName="text-primary font-semibold"
+              >
+                <ListTodo className="h-4 w-4" />
+                Requests
+              </NavLink>
+            )}
             <Popover>
               <PopoverTrigger asChild>
                 <Button 

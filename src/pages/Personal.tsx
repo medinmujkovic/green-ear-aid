@@ -2,7 +2,11 @@ import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Gift, CheckCircle, Volume2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MapPin, Gift, CheckCircle, Volume2, Send } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -29,6 +33,12 @@ const Personal = () => {
   const [userId, setUserId] = useState<string>('');
   const [tasks, setTasks] = useState<any[]>([]);
   const [playingRewardFor, setPlayingRewardFor] = useState<string | null>(null);
+  const [requestForm, setRequestForm] = useState({
+    title: '',
+    description: '',
+    location: '',
+    category: '',
+  });
 
   const fetchTasks = async (uid: string) => {
     const { data, error } = await supabase
@@ -181,6 +191,41 @@ const Personal = () => {
     }
   };
 
+  const handleSubmitRequest = async () => {
+    try {
+      const { error } = await supabase
+        .from('task_requests')
+        .insert({
+          user_id: userId,
+          title: requestForm.title,
+          description: requestForm.description,
+          location: requestForm.location,
+          category: requestForm.category,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Request Submitted',
+        description: 'Your task request has been sent to officials for review.',
+      });
+
+      setRequestForm({
+        title: '',
+        description: '',
+        location: '',
+        category: '',
+      });
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to submit request.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const completedTasks = tasks.filter(task => task.status === 'completed' || task.status === 'pending-approval');
 
   return (
@@ -238,70 +283,142 @@ const Personal = () => {
           </Card>
         </div>
 
-        <h2 className="text-2xl font-bold mb-4">Your Tasks</h2>
-        
-        {tasks.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground mb-4">
-                You haven't accepted any tasks yet.
-              </p>
-              <Button onClick={() => navigate('/tasks')}>
-                Browse Available Tasks
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {tasks.map(task => (
-              <Card key={task.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <CardTitle className="text-lg leading-tight">{task.title}</CardTitle>
-                    <Badge className={categoryColors[task.category]} variant="outline">
-                      {task.category}
-                    </Badge>
-                  </div>
-                  <Badge className={statusColors[task.status || 'in-progress']} variant="outline">
-                    {task.status?.replace('-', ' ').toUpperCase()}
-                  </Badge>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{task.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-primary font-semibold">
-                    <Gift className="h-5 w-5" />
-                    <span>{task.rewardDetails}</span>
-                  </div>
+        <Tabs defaultValue="tasks" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="tasks">My Tasks</TabsTrigger>
+            <TabsTrigger value="request">Request Task</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="tasks" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Your Tasks</h2>
+            
+            {tasks.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="text-muted-foreground mb-4">
+                    You haven't accepted any tasks yet.
+                  </p>
+                  <Button onClick={() => navigate('/tasks')}>
+                    Browse Available Tasks
+                  </Button>
                 </CardContent>
-                <CardFooter className="flex-col gap-2">
-                  {task.status === 'in-progress' && (
-                    <Button 
-                      className="w-full"
-                      onClick={() => handleMarkComplete(task.userTaskId)}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Mark as Complete
-                    </Button>
-                  )}
-                  {task.status === 'pending-approval' && (
-                    <Button 
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => handlePlayReward(task.id, task.title)}
-                      disabled={playingRewardFor === task.id}
-                    >
-                      <Volume2 className="h-4 w-4 mr-2" />
-                      {playingRewardFor === task.id ? 'Playing...' : 'Hear Your Reward'}
-                    </Button>
-                  )}
-                </CardFooter>
               </Card>
-            ))}
-          </div>
-        )}
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {tasks.map(task => (
+                  <Card key={task.id}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <CardTitle className="text-lg leading-tight">{task.title}</CardTitle>
+                        <Badge className={categoryColors[task.category]} variant="outline">
+                          {task.category}
+                        </Badge>
+                      </div>
+                      <Badge className={statusColors[task.status || 'in-progress']} variant="outline">
+                        {task.status?.replace('-', ' ').toUpperCase()}
+                      </Badge>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>{task.location}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-primary font-semibold">
+                        <Gift className="h-5 w-5" />
+                        <span>{task.rewardDetails}</span>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex-col gap-2">
+                      {task.status === 'in-progress' && (
+                        <Button 
+                          className="w-full"
+                          onClick={() => handleMarkComplete(task.userTaskId)}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Mark as Complete
+                        </Button>
+                      )}
+                      {task.status === 'pending-approval' && (
+                        <Button 
+                          className="w-full"
+                          variant="outline"
+                          onClick={() => handlePlayReward(task.id, task.title)}
+                          disabled={playingRewardFor === task.id}
+                        >
+                          <Volume2 className="h-4 w-4 mr-2" />
+                          {playingRewardFor === task.id ? 'Playing...' : 'Hear Your Reward'}
+                        </Button>
+                      )}
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="request" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Request a New Task</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Submit a request for a task you need completed in your area
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Task Title</label>
+                  <Input
+                    value={requestForm.title}
+                    onChange={(e) => setRequestForm({ ...requestForm, title: e.target.value })}
+                    placeholder="e.g., Clean up park entrance"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Description</label>
+                  <Textarea
+                    value={requestForm.description}
+                    onChange={(e) => setRequestForm({ ...requestForm, description: e.target.value })}
+                    placeholder="Describe what needs to be done"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Location</label>
+                  <Input
+                    value={requestForm.location}
+                    onChange={(e) => setRequestForm({ ...requestForm, location: e.target.value })}
+                    placeholder="e.g., Central Park, Main Street"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Category</label>
+                  <Select value={requestForm.category} onValueChange={(v) => setRequestForm({ ...requestForm, category: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cleanup">Cleanup</SelectItem>
+                      <SelectItem value="planting">Planting</SelectItem>
+                      <SelectItem value="monitoring">Monitoring</SelectItem>
+                      <SelectItem value="education">Education</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button
+                  onClick={handleSubmitRequest}
+                  disabled={!requestForm.title || !requestForm.description || !requestForm.location || !requestForm.category}
+                  className="w-full"
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  Submit Request
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

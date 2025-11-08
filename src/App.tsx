@@ -7,6 +7,7 @@ import Auth from "./pages/Auth";
 import Tasks from "./pages/Tasks";
 import TaskDetail from "./pages/TaskDetail";
 import Personal from "./pages/Personal";
+import Requests from "./pages/Requests";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/task/:id" element={<TaskDetail />} />
           <Route path="/personal" element={<Personal />} />
+          <Route path="/requests" element={<Requests />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
