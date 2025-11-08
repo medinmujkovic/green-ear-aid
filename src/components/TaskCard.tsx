@@ -43,7 +43,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
             {task.assignee === 'government' ? (
               <><Building2 className="h-3 w-3 mr-1" />Government</>
             ) : (
-              <><User className="h-3 w-3 mr-1" />Personal</>
+              <><User className="h-3 w-3 mr-1" />Individual</>
             )}
           </Badge>
           <Badge variant="secondary" className="text-xs">
@@ -63,8 +63,8 @@ export const TaskCard = ({ task }: TaskCardProps) => {
       </CardContent>
       <CardFooter className="border-t bg-muted/30 pt-4">
         <div className="flex items-center gap-2 text-primary font-semibold">
-          <Coins className="h-5 w-5" />
-          <span>{task.reward} EcoPoints</span>
+          <Gift className="h-5 w-5" />
+          <span>{task.rewardDetails}</span>
         </div>
       </CardFooter>
     </Card>

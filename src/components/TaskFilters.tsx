@@ -65,7 +65,7 @@ export const TaskFilters = ({
             <SelectContent>
               <SelectItem value="all">All Assignees</SelectItem>
               <SelectItem value="government">Government</SelectItem>
-              <SelectItem value="personal">Personal</SelectItem>
+              <SelectItem value="individual">Individual</SelectItem>
             </SelectContent>
           </Select>
         </div>
