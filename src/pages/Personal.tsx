@@ -283,20 +283,21 @@ const Personal = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="tasks" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="tasks">My Tasks</TabsTrigger>
+        <Tabs defaultValue="active" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="active">Active Tasks</TabsTrigger>
+            <TabsTrigger value="completed">Completed Tasks</TabsTrigger>
             <TabsTrigger value="request">Request Task</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="tasks" className="mt-6">
-            <h2 className="text-2xl font-bold mb-4">Your Tasks</h2>
+          <TabsContent value="active" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Active Tasks</h2>
             
-            {tasks.length === 0 ? (
+            {tasks.filter(t => t.status === 'in-progress').length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <p className="text-muted-foreground mb-4">
-                    You haven't accepted any tasks yet.
+                    You don't have any active tasks.
                   </p>
                   <Button onClick={() => navigate('/tasks')}>
                     Browse Available Tasks
@@ -305,7 +306,7 @@ const Personal = () => {
               </Card>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {tasks.map(task => (
+                {tasks.filter(t => t.status === 'in-progress').map(task => (
                   <Card key={task.id}>
                     <CardHeader>
                       <div className="flex items-start justify-between gap-3 mb-2">
@@ -314,8 +315,8 @@ const Personal = () => {
                           {task.category}
                         </Badge>
                       </div>
-                      <Badge className={statusColors[task.status || 'in-progress']} variant="outline">
-                        {task.status?.replace('-', ' ').toUpperCase()}
+                      <Badge className={statusColors[task.status]} variant="outline">
+                        IN PROGRESS
                       </Badge>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -328,17 +329,64 @@ const Personal = () => {
                         <span>{task.rewardDetails}</span>
                       </div>
                     </CardContent>
-                    <CardFooter className="flex-col gap-2">
-                      {task.status === 'in-progress' && (
-                        <Button 
-                          className="w-full"
-                          onClick={() => handleMarkComplete(task.userTaskId)}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Mark as Complete
-                        </Button>
+                    <CardFooter>
+                      <Button 
+                        className="w-full"
+                        onClick={() => handleMarkComplete(task.userTaskId)}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Mark as Complete
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="completed" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Completed & Pending Approval</h2>
+            
+            {completedTasks.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="text-muted-foreground">
+                    You haven't completed any tasks yet.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {completedTasks.map(task => (
+                  <Card key={task.id}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <CardTitle className="text-lg leading-tight">{task.title}</CardTitle>
+                        <Badge className={categoryColors[task.category]} variant="outline">
+                          {task.category}
+                        </Badge>
+                      </div>
+                      <Badge className={statusColors[task.status]} variant="outline">
+                        {task.status?.replace('-', ' ').toUpperCase()}
+                      </Badge>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>{task.location}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-primary font-semibold">
+                        <Gift className="h-5 w-5" />
+                        <span>{task.rewardDetails}</span>
+                      </div>
+                      {task.completedAt && (
+                        <p className="text-xs text-muted-foreground">
+                          Completed: {new Date(task.completedAt).toLocaleDateString()}
+                        </p>
                       )}
-                      {task.status === 'pending-approval' && (
+                    </CardContent>
+                    {task.status === 'pending-approval' && (
+                      <CardFooter>
                         <Button 
                           className="w-full"
                           variant="outline"
@@ -348,8 +396,8 @@ const Personal = () => {
                           <Volume2 className="h-4 w-4 mr-2" />
                           {playingRewardFor === task.id ? 'Playing...' : 'Hear Your Reward'}
                         </Button>
-                      )}
-                    </CardFooter>
+                      </CardFooter>
+                    )}
                   </Card>
                 ))}
               </div>
