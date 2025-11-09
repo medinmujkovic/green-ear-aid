@@ -5,7 +5,7 @@ import { MapPin, Coins, Building2, User, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface TaskCardProps {
-  task: Task;
+  task: Task | any;
 }
 
 const categoryColors = {
@@ -26,21 +26,25 @@ const rewardTypeLabels: Record<string, string> = {
 export const TaskCard = ({ task }: TaskCardProps) => {
   const navigate = useNavigate();
 
+  // Normalize fields from DB (snake_case) or client types (camelCase)
+  const rewardTypeKey = (task?.rewardType ?? task?.reward_type) as string | undefined;
+  const rewardDetails = (task?.rewardDetails ?? task?.reward_details) as string | undefined;
+
   return (
     <Card 
       className="cursor-pointer transition-all hover:shadow-medium hover:-translate-y-1"
-      onClick={() => navigate(`/task/${task.id}`)}
+      onClick={() => navigate(`/task/${(task as any).id}`)}
     >
       <CardHeader>
         <div className="flex items-start justify-between gap-3 mb-3">
-          <CardTitle className="text-lg leading-tight">{task.title}</CardTitle>
-          <Badge className={categoryColors[task.category]} variant="outline">
-            {task.category}
+          <CardTitle className="text-lg leading-tight">{(task as any).title}</CardTitle>
+          <Badge className={categoryColors[(task as any).category as keyof typeof categoryColors]} variant="outline">
+            {(task as any).category}
           </Badge>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-xs">
-            {task.assignee === 'government' ? (
+            {(task as any).assignee === 'government' ? (
               <><Building2 className="h-3 w-3 mr-1" />Government</>
             ) : (
               <><User className="h-3 w-3 mr-1" />Individual</>
@@ -48,23 +52,24 @@ export const TaskCard = ({ task }: TaskCardProps) => {
           </Badge>
           <Badge variant="secondary" className="text-xs">
             <Gift className="h-3 w-3 mr-1" />
-            {rewardTypeLabels[task.rewardType]}
+            {rewardTypeKey ? (rewardTypeLabels[rewardTypeKey] ?? rewardTypeKey) : 'Reward'}
           </Badge>
         </div>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-          {task.description}
+          {(task as any).description}
         </p>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <MapPin className="h-4 w-4" />
-          <span>{task.location}</span>
+          <span>{(task as any).location}</span>
         </div>
       </CardContent>
       <CardFooter className="border-t bg-muted/30 pt-4">
         <div className="flex items-center gap-2 text-primary font-semibold">
           <Gift className="h-5 w-5" />
-          <span className="text-base">{task.rewardDetails}</span>
+          {/* Prefer the specific reward details text; fallback to points if needed */}
+          <span className="text-base">{rewardDetails || (typeof (task as any).reward === 'number' ? `Reward: ${(task as any).reward} points` : 'Reward available')}</span>
         </div>
       </CardFooter>
     </Card>
