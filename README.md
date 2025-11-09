@@ -2,6 +2,7 @@
 
 EcoEcho is a pioneering civic-tech platform designed to create a direct bridge between citizens, their city government, and environmental action. Our mission is to transform real, data-driven environmental insights into actionable community tasks, empowering individuals to contribute to a sustainable future while earning tangible rewards.
 
+**NOTE:** Required documentation which includes Architecture diagram is pushed on this repository. For easier access, you can [click here.](https://github.com/medinmujkovic/green-ear-aid/blob/main/EcoEchoDocu.pdf)
 
 ## Video showcase:
 [You can find video showcase and presentation here.](https://www.youtube.com/@MuhamedHusi%C4%87-p2t)
