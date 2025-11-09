@@ -11,7 +11,7 @@ EcoEcho is a pioneering civic-tech platform designed to create a direct bridge b
 - [Muhamed Husić](https://github.com/HMByteSensei)
 - [Medin Mujković](https://github.com/medinmujkovic)
 
-## 🌟 Features
+## Features
 
 *   **AI-Generated Insights:** Leverages datasets from the Amazon Sustainability Data Initiative (ASDI), including Sentinel-2 imagery and OpenAQ data, to identify real-world environmental challenges like urban expansion and air quality hotspots. These insights form the basis of our "smart" tasks.
 *   **Dynamic Task Marketplace:** A central hub where citizens can browse, accept, and complete a variety of environmental tasks.
@@ -24,7 +24,7 @@ EcoEcho is a pioneering civic-tech platform designed to create a direct bridge b
 *   **Real Rewards System:** Upon official approval of a completed task, citizens receive real rewards from the city (e.g., a free transport pass).
 *   **Enhanced Accessibility with ElevenLabs:** Tasks come alive with human-like AI voice narration of descriptions and personalized congratulatory messages upon completion, making the platform engaging and accessible.
 
-## 🚀 User Flow
+## User Flow
 
 1.  **AI-Generated Insights:** Our platform analyzes ASDI datasets to detect environmental challenges.
 2.  **Task Creation:**
@@ -35,7 +35,7 @@ EcoEcho is a pioneering civic-tech platform designed to create a direct bridge b
 3.  **Task Completion:** Citizens log in, accept a task, and complete it.
 4.  **Verification & Rewards:** Officials approve completed tasks, and citizens receive their rewards.
 
-## 🛠️ Technology Stack (Key Roles)
+## Technology Stack (Key Roles)
 
 ### 1. Lovable (Frontend Development & Hosting)
 *   **What it does:** Lovable acted as our AI-assisted development teammate. We provided it with high-level instructions, and it generated the entire, production-ready React + Vite frontend for our application.
