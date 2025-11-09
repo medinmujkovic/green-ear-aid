@@ -55,6 +55,7 @@ const Requests = () => {
 
       if (roleData?.role === 'official') {
         setIsOfficial(true);
+        setTaskForm(prev => ({ ...prev, assignee: 'government' }));
         fetchRequests();
       } else {
         setIsOfficial(false);
