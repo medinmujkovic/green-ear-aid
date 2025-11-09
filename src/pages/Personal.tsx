@@ -173,25 +173,50 @@ const Personal = () => {
 
   const handleSubmitRequest = async () => {
     try {
-      const { error } = await supabase
-        .from('task_requests')
-        .insert({
-          user_id: userId,
-          title: requestForm.title,
-          description: requestForm.description,
-          location: requestForm.location,
-          category: requestForm.category,
-          assignee: requestForm.assignee,
-          reward_type: requestForm.rewardType,
-          reward_details: requestForm.rewardDetails,
+      // If assignee is "individual", create directly in tasks table
+      if (requestForm.assignee === 'individual') {
+        const { error } = await supabase
+          .from('tasks')
+          .insert({
+            title: requestForm.title,
+            description: requestForm.description,
+            location: requestForm.location,
+            category: requestForm.category,
+            assignee: requestForm.assignee,
+            reward_type: requestForm.rewardType,
+            reward_details: requestForm.rewardDetails,
+            asdi_insight: '',
+            created_by: userId,
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: 'Task Created',
+          description: 'Your task has been added to the tasks list.',
         });
+      } else {
+        // If assignee is "government", create in task_requests for approval
+        const { error } = await supabase
+          .from('task_requests')
+          .insert({
+            user_id: userId,
+            title: requestForm.title,
+            description: requestForm.description,
+            location: requestForm.location,
+            category: requestForm.category,
+            assignee: requestForm.assignee,
+            reward_type: requestForm.rewardType,
+            reward_details: requestForm.rewardDetails,
+          });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: 'Request Submitted',
-        description: 'Your task request has been sent to officials for review.',
-      });
+        toast({
+          title: 'Government Task Request Submitted',
+          description: 'Your request will be reviewed by officials.',
+        });
+      }
 
       setRequestForm({
         title: '',
