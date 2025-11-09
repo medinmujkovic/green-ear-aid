@@ -107,40 +107,17 @@ const TaskDetail = () => {
     setIsPlayingAudio(true);
     
     try {
-      const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
-      
-      if (!apiKey) {
-        toast({
-          title: 'Configuration Error',
-          description: 'ElevenLabs API key not configured. Please add it to your environment variables.',
-          variant: 'destructive',
-        });
-        setIsPlayingAudio(false);
-        return;
-      }
-
-      const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/9BWtsMINqrJLrRacOk9x', {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': apiKey,
-        },
-        body: JSON.stringify({
-          text: task.asdi_insight,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-          },
-        }),
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: { text: task.asdi_insight }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate audio');
-      }
+      if (error) throw error;
 
-      const audioBlob = await response.blob();
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(data.audioContent), c => c.charCodeAt(0))],
+        { type: 'audio/mpeg' }
+      );
+      
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       

@@ -130,42 +130,19 @@ const Personal = () => {
     setPlayingRewardFor(taskId);
     
     try {
-      const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
-      
-      if (!apiKey) {
-        toast({
-          title: 'Configuration Error',
-          description: 'ElevenLabs API key not configured.',
-          variant: 'destructive',
-        });
-        setPlayingRewardFor(null);
-        return;
-      }
-
       const rewardMessage = `Congratulations ${userName}! You've successfully completed the task: ${taskTitle}. Your dedication to making our city cleaner and greener is truly inspiring. Thank you for your contribution to our community's environmental health!`;
 
-      const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/9BWtsMINqrJLrRacOk9x', {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': apiKey,
-        },
-        body: JSON.stringify({
-          text: rewardMessage,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.6,
-            similarity_boost: 0.8,
-          },
-        }),
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: { text: rewardMessage }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate audio');
-      }
+      if (error) throw error;
 
-      const audioBlob = await response.blob();
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(data.audioContent), c => c.charCodeAt(0))],
+        { type: 'audio/mpeg' }
+      );
+      
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       
