@@ -32,12 +32,11 @@ const Requests = () => {
     description: '',
     location: '',
     category: '',
-    assignee: '',
+    assignee: 'individual',
     rewardType: '',
     rewardDetails: '',
     reward: '0',
     asdiInsight: '',
-    taskType: 'personal', // personal or government
   });
 
   useEffect(() => {
@@ -104,7 +103,6 @@ const Requests = () => {
           rewardDetails: parsed.rewardDetails || '',
           reward: '100',
           asdiInsight: parsed.asdiInsight || '',
-          taskType: 'personal',
         });
       } catch {
         setTaskForm({
@@ -117,7 +115,6 @@ const Requests = () => {
           rewardDetails: '',
           reward: '100',
           asdiInsight: '',
-          taskType: 'personal',
         });
       }
 
@@ -142,8 +139,8 @@ const Requests = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // If user selected "personal" task type, create directly in tasks table
-      if (taskForm.taskType === 'personal') {
+      // If assignee is "individual", create directly in tasks table
+      if (taskForm.assignee === 'individual') {
         const { error } = await supabase
           .from('tasks')
           .insert({
@@ -162,11 +159,11 @@ const Requests = () => {
         if (error) throw error;
 
         toast({
-          title: 'Personal Task Created',
+          title: 'Task Created',
           description: 'Your task has been added to the tasks list.',
         });
       } else {
-        // If "government" task type, create in task_requests for approval
+        // If assignee is "government", create in task_requests for approval
         const { error } = await supabase
           .from('task_requests')
           .insert({
@@ -196,12 +193,11 @@ const Requests = () => {
         description: '',
         location: '',
         category: '',
-        assignee: '',
+        assignee: 'individual',
         rewardType: '',
         rewardDetails: '',
         reward: '0',
         asdiInsight: '',
-        taskType: 'personal',
       });
     } catch (error) {
       console.error('Error creating task:', error);
@@ -248,12 +244,11 @@ const Requests = () => {
         description: '',
         location: '',
         category: '',
-        assignee: '',
+        assignee: 'individual',
         rewardType: '',
         rewardDetails: '',
         reward: '0',
         asdiInsight: '',
-        taskType: 'personal',
       });
       setSelectedRequest(null);
       setAiSuggestion('');
@@ -453,14 +448,14 @@ const Requests = () => {
 
                 {!isOfficial && (
                   <div>
-                    <label className="text-sm font-medium">Task Type</label>
-                    <Select value={taskForm.taskType} onValueChange={(v) => setTaskForm({ ...taskForm, taskType: v })}>
+                    <label className="text-sm font-medium">Assignee</label>
+                    <Select value={taskForm.assignee} onValueChange={(v) => setTaskForm({ ...taskForm, assignee: v })}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select task type" />
+                        <SelectValue placeholder="Select assignee" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="personal">Personal Task (Auto-approved)</SelectItem>
-                        <SelectItem value="government">Government Task (Needs Approval)</SelectItem>
+                        <SelectItem value="individual">Individual (Auto-approved)</SelectItem>
+                        <SelectItem value="government">Government (Needs Approval)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -473,8 +468,8 @@ const Requests = () => {
                 >
                   {isOfficial 
                     ? 'Create Task' 
-                    : taskForm.taskType === 'personal' 
-                      ? 'Create Personal Task' 
+                    : taskForm.assignee === 'individual' 
+                      ? 'Create Individual Task' 
                       : 'Submit Government Task Request'}
                 </Button>
               </CardContent>
