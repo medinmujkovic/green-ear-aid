@@ -263,6 +263,45 @@ const Requests = () => {
     }
   };
 
+  const handleApproveRequest = async (request: any) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .insert({
+          title: request.title,
+          description: request.description,
+          location: request.location,
+          category: request.category,
+          assignee: request.assignee,
+          reward_type: request.reward_type,
+          reward_details: request.reward_details,
+          reward: request.reward,
+          asdi_insight: request.asdi_insight || '',
+        });
+
+      if (error) throw error;
+
+      await supabase
+        .from('task_requests')
+        .update({ status: 'approved' })
+        .eq('id', request.id);
+
+      toast({
+        title: 'Request Approved',
+        description: 'The task has been added to the tasks list.',
+      });
+
+      fetchRequests();
+    } catch (error) {
+      console.error('Error approving request:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to approve request.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleDeleteRequest = async (id: string) => {
     try {
       const { error } = await supabase
@@ -330,6 +369,12 @@ const Requests = () => {
                         <p className="text-sm text-muted-foreground">{request.description}</p>
                         <p className="text-sm"><strong>Location:</strong> {request.location}</p>
                         <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleApproveRequest(request)}
+                            size="sm"
+                          >
+                            Approve
+                          </Button>
                           <Button
                             onClick={() => handleGetAISuggestion(request)}
                             disabled={loading}
