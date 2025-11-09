@@ -60,13 +60,23 @@ export const Navigation = () => {
             >
               Tasks
             </NavLink>
-            <NavLink 
-              to="/personal" 
-              className="text-foreground/70 hover:text-foreground transition-colors"
-              activeClassName="text-primary font-semibold"
-            >
-              Personal
-            </NavLink>
+            {isOfficial ? (
+              <NavLink 
+                to="/tasks-review" 
+                className="text-foreground/70 hover:text-foreground transition-colors"
+                activeClassName="text-primary font-semibold"
+              >
+                Tasks Review
+              </NavLink>
+            ) : (
+              <NavLink 
+                to="/personal" 
+                className="text-foreground/70 hover:text-foreground transition-colors"
+                activeClassName="text-primary font-semibold"
+              >
+                Personal
+              </NavLink>
+            )}
             {isOfficial && (
               <NavLink 
                 to="/requests" 
