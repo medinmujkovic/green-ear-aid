@@ -104,6 +104,15 @@ const TaskDetail = () => {
   };
 
   const handlePlayAudio = async () => {
+    if (!task.asdi_insight || task.asdi_insight.trim() === '') {
+      toast({
+        title: 'No AI Analysis Available',
+        description: 'This task does not have ASDI insights yet.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsPlayingAudio(true);
     
     try {
@@ -218,7 +227,7 @@ const TaskDetail = () => {
               className="w-full" 
               size="lg"
               onClick={handlePlayAudio}
-              disabled={isPlayingAudio}
+              disabled={isPlayingAudio || !task.asdi_insight}
               variant="outline"
             >
               <Volume2 className="h-5 w-5 mr-2" />
