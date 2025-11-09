@@ -109,25 +109,43 @@ const TasksReview = () => {
     setLoading(false);
   };
 
-  const handleApprove = async (userTaskId: string) => {
-    const { error } = await supabase
+  const handleApprove = async (userTaskId: string, taskId: string) => {
+    // Update user_tasks status to completed
+    const { error: updateError } = await supabase
       .from('user_tasks')
       .update({ status: 'completed' })
       .eq('id', userTaskId);
 
-    if (error) {
+    if (updateError) {
       toast({
         title: 'Error',
         description: 'Failed to approve task',
         variant: 'destructive',
       });
+      return;
+    }
+
+    // Delete the task from tasks table so it's no longer available
+    const { error: deleteError } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId);
+
+    if (deleteError) {
+      console.error('Error deleting task:', deleteError);
+      // Still show success since the user task was approved
+      toast({
+        title: 'Warning',
+        description: 'Task approved but could not remove from tasks list.',
+      });
     } else {
       toast({
         title: 'Success',
-        description: 'Task approved! User will receive their reward.',
+        description: 'Task approved and removed from available tasks!',
       });
-      fetchPendingTasks();
     }
+    
+    fetchPendingTasks();
   };
 
   const handleDeny = async (userTaskId: string) => {
@@ -211,7 +229,7 @@ const TasksReview = () => {
                 </CardContent>
                 <CardFooter className="flex gap-2">
                   <Button 
-                    onClick={() => handleApprove(item.id)}
+                    onClick={() => handleApprove(item.id, item.task_id)}
                     className="flex-1"
                   >
                     Approve
