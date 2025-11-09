@@ -64,7 +64,10 @@ export const TaskCard = ({ task }: TaskCardProps) => {
       <CardFooter className="border-t bg-muted/30 pt-4">
         <div className="flex items-center gap-2 text-primary font-semibold">
           <Gift className="h-5 w-5" />
-          <span>{task.rewardDetails}</span>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">Reward: {task.reward} points</span>
+            <span className="text-xs text-muted-foreground">{task.rewardDetails}</span>
+          </div>
         </div>
       </CardFooter>
     </Card>
