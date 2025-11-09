@@ -38,6 +38,9 @@ const Personal = () => {
     description: '',
     location: '',
     category: '',
+    assignee: 'individual',
+    rewardType: 'money',
+    rewardDetails: '',
   });
 
   const fetchTasks = async (uid: string) => {
@@ -178,6 +181,9 @@ const Personal = () => {
           description: requestForm.description,
           location: requestForm.location,
           category: requestForm.category,
+          assignee: requestForm.assignee,
+          reward_type: requestForm.rewardType,
+          reward_details: requestForm.rewardDetails,
         });
 
       if (error) throw error;
@@ -192,6 +198,9 @@ const Personal = () => {
         description: '',
         location: '',
         category: '',
+        assignee: 'individual',
+        rewardType: 'money',
+        rewardDetails: '',
       });
     } catch (error) {
       console.error('Error submitting request:', error);
@@ -428,13 +437,52 @@ const Personal = () => {
                       <SelectItem value="planting">Planting</SelectItem>
                       <SelectItem value="monitoring">Monitoring</SelectItem>
                       <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
+                <div>
+                  <label className="text-sm font-medium">Assignee</label>
+                  <Select value={requestForm.assignee} onValueChange={(v) => setRequestForm({ ...requestForm, assignee: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="government">Government</SelectItem>
+                      <SelectItem value="individual">Individual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Reward Type</label>
+                  <Select value={requestForm.rewardType} onValueChange={(v) => setRequestForm({ ...requestForm, rewardType: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="money">Money</SelectItem>
+                      <SelectItem value="transport">Transport Pass</SelectItem>
+                      <SelectItem value="coupon">Coupon</SelectItem>
+                      <SelectItem value="cinema">Cinema Ticket</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Reward Details</label>
+                  <Input
+                    value={requestForm.rewardDetails}
+                    onChange={(e) => setRequestForm({ ...requestForm, rewardDetails: e.target.value })}
+                    placeholder="e.g., $50, Free bus pass for 1 month"
+                  />
+                </div>
+
                 <Button
                   onClick={handleSubmitRequest}
-                  disabled={!requestForm.title || !requestForm.description || !requestForm.location || !requestForm.category}
+                  disabled={!requestForm.title || !requestForm.description || !requestForm.location || !requestForm.category || !requestForm.rewardDetails}
                   className="w-full"
                 >
                   <Send className="h-4 w-4 mr-2" />
