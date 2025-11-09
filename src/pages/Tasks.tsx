@@ -4,8 +4,10 @@ import { TaskFilters } from '@/components/TaskFilters';
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Tasks = () => {
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string>('');
   const [tasks, setTasks] = useState<any[]>([]);
@@ -86,6 +88,30 @@ const Tasks = () => {
     setSelectedLocation('all');
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete task. Please try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    toast({
+      title: 'Task Deleted',
+      description: 'The task has been removed successfully.',
+    });
+
+    // Refresh tasks list
+    setTasks(tasks.filter(t => t.id !== taskId));
+  };
+
   if (!userId) return null;
 
 
@@ -121,7 +147,12 @@ const Tasks = () => {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {availableTasksFiltered.map(task => (
-            <TaskCard key={task.id} task={task} />
+            <TaskCard 
+              key={task.id} 
+              task={task} 
+              isOfficial={isOfficial}
+              onDelete={handleDeleteTask}
+            />
           ))}
         </div>
 

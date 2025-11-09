@@ -1,11 +1,14 @@
 import { Task } from '@/types/task';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Coins, Building2, User, Gift } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, Coins, Building2, User, Gift, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface TaskCardProps {
   task: Task | any;
+  isOfficial?: boolean;
+  onDelete?: (taskId: string) => void;
 }
 
 const categoryColors = {
@@ -23,12 +26,19 @@ const rewardTypeLabels: Record<string, string> = {
   other: 'Reward',
 };
 
-export const TaskCard = ({ task }: TaskCardProps) => {
+export const TaskCard = ({ task, isOfficial = false, onDelete }: TaskCardProps) => {
   const navigate = useNavigate();
 
   // Normalize fields from DB (snake_case) or client types (camelCase)
   const rewardTypeKey = (task?.rewardType ?? task?.reward_type) as string | undefined;
   const rewardDetails = (task?.rewardDetails ?? task?.reward_details) as string | undefined;
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(task.id);
+    }
+  };
 
   return (
     <Card 
@@ -38,9 +48,21 @@ export const TaskCard = ({ task }: TaskCardProps) => {
       <CardHeader>
         <div className="flex items-start justify-between gap-3 mb-3">
           <CardTitle className="text-lg leading-tight">{(task as any).title}</CardTitle>
-          <Badge className={categoryColors[(task as any).category as keyof typeof categoryColors]} variant="outline">
-            {(task as any).category}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge className={categoryColors[(task as any).category as keyof typeof categoryColors]} variant="outline">
+              {(task as any).category}
+            </Badge>
+            {isOfficial && (
+              <Button
+                variant="destructive"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleDelete}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-xs">
