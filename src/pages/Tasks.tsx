@@ -45,8 +45,6 @@ const Tasks = () => {
     loadData();
   }, [navigate]);
 
-  if (!userId) return null;
-
   // Get unique locations
   const uniqueLocations = useMemo(() => {
     return Array.from(new Set(tasks.map(task => task.location)));
@@ -74,6 +72,9 @@ const Tasks = () => {
     setSelectedCategory('all');
     setSelectedLocation('all');
   };
+
+  if (!userId) return null;
+
 
   return (
     <div className="min-h-screen bg-gradient-sky">
