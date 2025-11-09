@@ -411,6 +411,7 @@ const Requests = () => {
                       <SelectItem value="planting">Planting</SelectItem>
                       <SelectItem value="monitoring">Monitoring</SelectItem>
                       <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
