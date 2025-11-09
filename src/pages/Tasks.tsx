@@ -1,16 +1,15 @@
 import { Navigation } from '@/components/Navigation';
 import { TaskCard } from '@/components/TaskCard';
 import { TaskFilters } from '@/components/TaskFilters';
-import { availableTasks } from '@/data/mockTasks';
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser } from '@/utils/auth';
-import { getUserTasks } from '@/utils/userTasks';
+import { supabase } from '@/integrations/supabase/client';
 
 const Tasks = () => {
   const navigate = useNavigate();
-  const user = getUser();
-  const userTasks = getUserTasks();
+  const [userId, setUserId] = useState<string>('');
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [userTaskIds, setUserTaskIds] = useState<string[]>([]);
 
   const [selectedAssignee, setSelectedAssignee] = useState('all');
   const [selectedRewardType, setSelectedRewardType] = useState('all');
@@ -18,34 +17,56 @@ const Tasks = () => {
   const [selectedLocation, setSelectedLocation] = useState('all');
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    }
-  }, [user, navigate]);
+    const loadData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
 
-  if (!user) return null;
+      setUserId(session.user.id);
+
+      // Fetch all tasks
+      const { data: tasksData } = await supabase
+        .from('tasks')
+        .select('*');
+
+      setTasks(tasksData || []);
+
+      // Fetch user's accepted tasks
+      const { data: userTasksData } = await supabase
+        .from('user_tasks')
+        .select('task_id')
+        .eq('user_id', session.user.id);
+
+      setUserTaskIds(userTasksData?.map(ut => ut.task_id) || []);
+    };
+
+    loadData();
+  }, [navigate]);
+
+  if (!userId) return null;
 
   // Get unique locations
   const uniqueLocations = useMemo(() => {
-    return Array.from(new Set(availableTasks.map(task => task.location)));
-  }, []);
+    return Array.from(new Set(tasks.map(task => task.location)));
+  }, [tasks]);
 
   // Filter out tasks that the user has already accepted
-  const userTaskIds = userTasks.map(task => task.id);
   const availableTasksFiltered = useMemo(() => {
-    return availableTasks.filter(task => {
+    return tasks.filter(task => {
       // Filter out accepted tasks
       if (userTaskIds.includes(task.id)) return false;
 
       // Apply filters
       if (selectedAssignee !== 'all' && task.assignee !== selectedAssignee) return false;
-      if (selectedRewardType !== 'all' && task.rewardType !== selectedRewardType) return false;
+      if (selectedRewardType !== 'all' && task.reward_type !== selectedRewardType) return false;
       if (selectedCategory !== 'all' && task.category !== selectedCategory) return false;
       if (selectedLocation !== 'all' && task.location !== selectedLocation) return false;
 
       return true;
     });
-  }, [userTaskIds, selectedAssignee, selectedRewardType, selectedCategory, selectedLocation]);
+  }, [tasks, userTaskIds, selectedAssignee, selectedRewardType, selectedCategory, selectedLocation]);
 
   const handleClearFilters = () => {
     setSelectedAssignee('all');

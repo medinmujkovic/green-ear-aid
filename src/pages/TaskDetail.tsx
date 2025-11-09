@@ -4,11 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Gift, Volume2, CheckCircle, Building2, User } from 'lucide-react';
-import { availableTasks } from '@/data/mockTasks';
-import { getUserTasks, addUserTask } from '@/utils/userTasks';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { getUser } from '@/utils/auth';
+import { supabase } from '@/integrations/supabase/client';
 
 const categoryColors = {
   cleanup: 'bg-accent/10 text-accent border-accent/20',
@@ -30,33 +28,74 @@ const TaskDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const user = getUser();
+  const [task, setTask] = useState<any>(null);
+  const [hasAccepted, setHasAccepted] = useState(false);
+  const [userId, setUserId] = useState<string>('');
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    }
-  }, [user, navigate]);
+    const loadData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
 
-  if (!user) return null;
+      setUserId(session.user.id);
 
-  const task = availableTasks.find(t => t.id === id);
-  const userTasks = getUserTasks();
-  const hasAccepted = userTasks.some(t => t.id === id);
+      // Fetch task from database
+      const { data: taskData } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (taskData) {
+        setTask(taskData);
+      }
+
+      // Check if user has accepted this task
+      const { data: userTaskData } = await supabase
+        .from('user_tasks')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('task_id', id)
+        .maybeSingle();
+
+      setHasAccepted(!!userTaskData);
+    };
+
+    loadData();
+  }, [id, navigate]);
 
   if (!task) {
     return (
       <div className="min-h-screen bg-gradient-sky">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
-          <p>Task not found</p>
+          <p>Loading task...</p>
         </div>
       </div>
     );
   }
 
-  const handleAcceptTask = () => {
-    addUserTask(task);
+  const handleAcceptTask = async () => {
+    const { error } = await supabase
+      .from('user_tasks')
+      .insert({
+        user_id: userId,
+        task_id: task.id,
+        status: 'in-progress'
+      });
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to accept task. Please try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     toast({
       title: 'Task Accepted!',
       description: 'Check your Personal tab to manage this task.',
@@ -88,7 +127,7 @@ const TaskDetail = () => {
           'xi-api-key': apiKey,
         },
         body: JSON.stringify({
-          text: task.asdiInsight,
+          text: task.asdi_insight,
           model_id: 'eleven_multilingual_v2',
           voice_settings: {
             stability: 0.5,
@@ -146,7 +185,7 @@ const TaskDetail = () => {
               <CardHeader>
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <CardTitle className="text-2xl">{task.title}</CardTitle>
-                  <Badge className={categoryColors[task.category]} variant="outline">
+                  <Badge className={categoryColors[task.category as keyof typeof categoryColors]} variant="outline">
                     {task.category}
                   </Badge>
                 </div>
@@ -160,7 +199,7 @@ const TaskDetail = () => {
                   </Badge>
                   <Badge variant="secondary" className="text-xs">
                     <Gift className="h-3 w-3 mr-1" />
-                    {rewardTypeLabels[task.rewardType]}
+                    {task.reward_type}
                   </Badge>
                 </div>
                 <CardDescription className="text-base">
@@ -178,7 +217,7 @@ const TaskDetail = () => {
                     <span className="text-primary">ASDI Insight</span>
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    {task.asdiInsight}
+                    {task.asdi_insight}
                   </p>
                 </div>
               </CardContent>
@@ -194,7 +233,7 @@ const TaskDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{task.rewardDetails}</p>
+                <p className="text-2xl font-bold">{task.reward_details}</p>
               </CardContent>
             </Card>
 
