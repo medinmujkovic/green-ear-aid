@@ -415,18 +415,6 @@ const Requests = () => {
                   </Select>
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium">Assignee</label>
-                  <Select value={taskForm.assignee} onValueChange={(v) => setTaskForm({ ...taskForm, assignee: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select assignee" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="government">Government</SelectItem>
-                      <SelectItem value="individual">Individual</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
 
                 <div>
                   <label className="text-sm font-medium">Reward Type</label>
