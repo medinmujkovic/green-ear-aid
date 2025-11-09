@@ -37,6 +37,7 @@ const Requests = () => {
     rewardDetails: '',
     reward: '0',
     asdiInsight: '',
+    taskType: 'personal', // personal or government
   });
 
   useEffect(() => {
@@ -57,12 +58,7 @@ const Requests = () => {
         setIsOfficial(true);
         fetchRequests();
       } else {
-        toast({
-          title: 'Access Denied',
-          description: 'Only officials can access this page.',
-          variant: 'destructive',
-        });
-        navigate('/personal');
+        setIsOfficial(false);
       }
     };
 
@@ -108,6 +104,7 @@ const Requests = () => {
           rewardDetails: parsed.rewardDetails || '',
           reward: '100',
           asdiInsight: parsed.asdiInsight || '',
+          taskType: 'personal',
         });
       } catch {
         setTaskForm({
@@ -120,6 +117,7 @@ const Requests = () => {
           rewardDetails: '',
           reward: '100',
           asdiInsight: '',
+          taskType: 'personal',
         });
       }
 
@@ -140,6 +138,82 @@ const Requests = () => {
   };
 
   const handleCreateTask = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // If user selected "personal" task type, create directly in tasks table
+      if (taskForm.taskType === 'personal') {
+        const { error } = await supabase
+          .from('tasks')
+          .insert({
+            title: taskForm.title,
+            description: taskForm.description,
+            location: taskForm.location,
+            category: taskForm.category,
+            assignee: taskForm.assignee,
+            reward_type: taskForm.rewardType,
+            reward_details: taskForm.rewardDetails,
+            reward: parseInt(taskForm.reward),
+            asdi_insight: taskForm.asdiInsight,
+            created_by: session.user.id,
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: 'Personal Task Created',
+          description: 'Your task has been added to the tasks list.',
+        });
+      } else {
+        // If "government" task type, create in task_requests for approval
+        const { error } = await supabase
+          .from('task_requests')
+          .insert({
+            user_id: session.user.id,
+            title: taskForm.title,
+            description: taskForm.description,
+            location: taskForm.location,
+            category: taskForm.category,
+            assignee: taskForm.assignee,
+            reward_type: taskForm.rewardType,
+            reward_details: taskForm.rewardDetails,
+            reward: parseInt(taskForm.reward),
+            asdi_insight: taskForm.asdiInsight,
+            status: 'pending',
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: 'Government Task Request Submitted',
+          description: 'Your request will be reviewed by officials.',
+        });
+      }
+
+      setTaskForm({
+        title: '',
+        description: '',
+        location: '',
+        category: '',
+        assignee: '',
+        rewardType: '',
+        rewardDetails: '',
+        reward: '0',
+        asdiInsight: '',
+        taskType: 'personal',
+      });
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create task.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCreateTaskFromRequest = async () => {
     try {
       const { error } = await supabase
         .from('tasks')
@@ -179,6 +253,7 @@ const Requests = () => {
         rewardDetails: '',
         reward: '0',
         asdiInsight: '',
+        taskType: 'personal',
       });
       setSelectedRequest(null);
       setAiSuggestion('');
@@ -218,8 +293,6 @@ const Requests = () => {
     }
   };
 
-  if (!isOfficial) return null;
-
   return (
     <div className="min-h-screen bg-gradient-sky">
       <Navigation />
@@ -227,64 +300,70 @@ const Requests = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Task Requests
+            {isOfficial ? 'Task Requests' : 'Request Tasks'}
           </h1>
           <p className="text-muted-foreground">
-            Review user requests and create official tasks with AI assistance
+            {isOfficial 
+              ? 'Review user requests and create official tasks with AI assistance' 
+              : 'Create your own tasks or request government tasks'}
           </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <div>
-            <h2 className="text-xl font-bold mb-4">Pending Requests</h2>
-            {requests.filter(r => r.status === 'pending').length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  No pending requests
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {requests.filter(r => r.status === 'pending').map((request) => (
-                  <Card key={request.id} className={selectedRequest?.id === request.id ? 'border-primary' : ''}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-3">
-                        <CardTitle className="text-lg">{request.title}</CardTitle>
-                        <Badge className={categoryColors[request.category]} variant="outline">
-                          {request.category}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm text-muted-foreground">{request.description}</p>
-                      <p className="text-sm"><strong>Location:</strong> {request.location}</p>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleGetAISuggestion(request)}
-                          disabled={loading}
-                          size="sm"
-                        >
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          AI Suggestion
-                        </Button>
-                        <Button
-                          onClick={() => handleDeleteRequest(request.id)}
-                          variant="destructive"
-                          size="sm"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+          {isOfficial && (
+            <div>
+              <h2 className="text-xl font-bold mb-4">Pending Requests</h2>
+              {requests.filter(r => r.status === 'pending').length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    No pending requests
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {requests.filter(r => r.status === 'pending').map((request) => (
+                    <Card key={request.id} className={selectedRequest?.id === request.id ? 'border-primary' : ''}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-3">
+                          <CardTitle className="text-lg">{request.title}</CardTitle>
+                          <Badge className={categoryColors[request.category]} variant="outline">
+                            {request.category}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-sm text-muted-foreground">{request.description}</p>
+                        <p className="text-sm"><strong>Location:</strong> {request.location}</p>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleGetAISuggestion(request)}
+                            disabled={loading}
+                            size="sm"
+                          >
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            AI Suggestion
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteRequest(request.id)}
+                            variant="destructive"
+                            size="sm"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-          <div>
-            <h2 className="text-xl font-bold mb-4">Create Official Task</h2>
+          <div className={isOfficial ? '' : 'lg:col-span-2 max-w-2xl mx-auto w-full'}>
+            <h2 className="text-xl font-bold mb-4">
+              {isOfficial ? 'Create Official Task' : 'Create Task'}
+            </h2>
             <Card>
               <CardContent className="pt-6 space-y-4">
                 {aiSuggestion && (
@@ -383,12 +462,31 @@ const Requests = () => {
                   />
                 </div>
 
+                {!isOfficial && (
+                  <div>
+                    <label className="text-sm font-medium">Task Type</label>
+                    <Select value={taskForm.taskType} onValueChange={(v) => setTaskForm({ ...taskForm, taskType: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select task type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="personal">Personal Task (Auto-approved)</SelectItem>
+                        <SelectItem value="government">Government Task (Needs Approval)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <Button
-                  onClick={handleCreateTask}
+                  onClick={isOfficial ? handleCreateTaskFromRequest : handleCreateTask}
                   disabled={!taskForm.title || !taskForm.description}
                   className="w-full"
                 >
-                  Create Task
+                  {isOfficial 
+                    ? 'Create Task' 
+                    : taskForm.taskType === 'personal' 
+                      ? 'Create Personal Task' 
+                      : 'Submit Government Task Request'}
                 </Button>
               </CardContent>
             </Card>

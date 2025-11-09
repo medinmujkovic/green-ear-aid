@@ -40,33 +40,48 @@ export type Database = {
       }
       task_requests: {
         Row: {
+          asdi_insight: string
+          assignee: string
           category: string
           created_at: string
           description: string
           id: string
           location: string
+          reward: number
+          reward_details: string
+          reward_type: string
           status: string
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          asdi_insight?: string
+          assignee?: string
           category: string
           created_at?: string
           description: string
           id?: string
           location: string
+          reward?: number
+          reward_details?: string
+          reward_type?: string
           status?: string
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          asdi_insight?: string
+          assignee?: string
           category?: string
           created_at?: string
           description?: string
           id?: string
           location?: string
+          reward?: number
+          reward_details?: string
+          reward_type?: string
           status?: string
           title?: string
           updated_at?: string
