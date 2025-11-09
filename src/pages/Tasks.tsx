@@ -10,6 +10,7 @@ const Tasks = () => {
   const [userId, setUserId] = useState<string>('');
   const [tasks, setTasks] = useState<any[]>([]);
   const [userTaskIds, setUserTaskIds] = useState<string[]>([]);
+  const [isOfficial, setIsOfficial] = useState(false);
 
   const [selectedAssignee, setSelectedAssignee] = useState('all');
   const [selectedRewardType, setSelectedRewardType] = useState('all');
@@ -26,6 +27,16 @@ const Tasks = () => {
 
       setUserId(session.user.id);
 
+      // Check if user is official
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single();
+
+      const userIsOfficial = roleData?.role === 'official';
+      setIsOfficial(userIsOfficial);
+
       // Fetch all tasks
       const { data: tasksData } = await supabase
         .from('tasks')
@@ -33,13 +44,15 @@ const Tasks = () => {
 
       setTasks(tasksData || []);
 
-      // Fetch user's accepted tasks
-      const { data: userTasksData } = await supabase
-        .from('user_tasks')
-        .select('task_id')
-        .eq('user_id', session.user.id);
+      // Fetch user's accepted tasks (only for regular users)
+      if (!userIsOfficial) {
+        const { data: userTasksData } = await supabase
+          .from('user_tasks')
+          .select('task_id')
+          .eq('user_id', session.user.id);
 
-      setUserTaskIds(userTasksData?.map(ut => ut.task_id) || []);
+        setUserTaskIds(userTasksData?.map(ut => ut.task_id) || []);
+      }
     };
 
     loadData();
@@ -50,11 +63,11 @@ const Tasks = () => {
     return Array.from(new Set(tasks.map(task => task.location)));
   }, [tasks]);
 
-  // Filter out tasks that the user has already accepted
+  // Filter tasks based on user role
   const availableTasksFiltered = useMemo(() => {
     return tasks.filter(task => {
-      // Filter out accepted tasks
-      if (userTaskIds.includes(task.id)) return false;
+      // Officials see all tasks, regular users don't see accepted tasks
+      if (!isOfficial && userTaskIds.includes(task.id)) return false;
 
       // Apply filters
       if (selectedAssignee !== 'all' && task.assignee !== selectedAssignee) return false;
@@ -64,7 +77,7 @@ const Tasks = () => {
 
       return true;
     });
-  }, [tasks, userTaskIds, selectedAssignee, selectedRewardType, selectedCategory, selectedLocation]);
+  }, [tasks, userTaskIds, selectedAssignee, selectedRewardType, selectedCategory, selectedLocation, isOfficial]);
 
   const handleClearFilters = () => {
     setSelectedAssignee('all');
@@ -83,10 +96,13 @@ const Tasks = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Available Tasks
+            {isOfficial ? 'All Tasks' : 'Available Tasks'}
           </h1>
           <p className="text-muted-foreground">
-            Choose from AI-analyzed environmental tasks in your area
+            {isOfficial 
+              ? 'View all environmental tasks in the system'
+              : 'Choose from AI-analyzed environmental tasks in your area'
+            }
           </p>
         </div>
 

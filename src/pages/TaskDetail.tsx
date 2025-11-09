@@ -31,6 +31,7 @@ const TaskDetail = () => {
   const [task, setTask] = useState<any>(null);
   const [hasAccepted, setHasAccepted] = useState(false);
   const [userId, setUserId] = useState<string>('');
+  const [isOfficial, setIsOfficial] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -41,6 +42,16 @@ const TaskDetail = () => {
       }
 
       setUserId(session.user.id);
+
+      // Check if user is official
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single();
+
+      const userIsOfficial = roleData?.role === 'official';
+      setIsOfficial(userIsOfficial);
 
       // Fetch task from database
       const { data: taskData } = await supabase
@@ -53,15 +64,17 @@ const TaskDetail = () => {
         setTask(taskData);
       }
 
-      // Check if user has accepted this task
-      const { data: userTaskData } = await supabase
-        .from('user_tasks')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .eq('task_id', id)
-        .maybeSingle();
+      // Check if user has accepted this task (only for regular users)
+      if (!userIsOfficial) {
+        const { data: userTaskData } = await supabase
+          .from('user_tasks')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .eq('task_id', id)
+          .maybeSingle();
 
-      setHasAccepted(!!userTaskData);
+        setHasAccepted(!!userTaskData);
+      }
     };
 
     loadData();
@@ -234,24 +247,26 @@ const TaskDetail = () => {
               {isPlayingAudio ? 'Playing...' : 'Listen to AI Analysis'}
             </Button>
 
-            {!hasAccepted ? (
-              <Button 
-                className="w-full" 
-                size="lg"
-                onClick={handleAcceptTask}
-              >
-                <CheckCircle className="h-5 w-5 mr-2" />
-                Accept Task
-              </Button>
-            ) : (
-              <Button 
-                className="w-full" 
-                size="lg"
-                variant="secondary"
-                disabled
-              >
-                Task Already Accepted
-              </Button>
+            {!isOfficial && (
+              !hasAccepted ? (
+                <Button 
+                  className="w-full" 
+                  size="lg"
+                  onClick={handleAcceptTask}
+                >
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  Accept Task
+                </Button>
+              ) : (
+                <Button 
+                  className="w-full" 
+                  size="lg"
+                  variant="secondary"
+                  disabled
+                >
+                  Task Already Accepted
+                </Button>
+              )
             )}
           </div>
         </div>
